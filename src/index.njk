@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+ 
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js">
+		</script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js">
+		</script>
+		<script src="https://d3js.org/d3.v4.min.js">
+		</script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-sparklines/2.1.2/jquery.sparkline.min.js">
+		</script>
+
+</head>
+
+
+
+
+
+
+<body>
+
+
+<h1>DashBoard (Draft)</h1>
+
+  <div id="myGrid" style="height: 600px;width:100%;" class="ag-theme-alpine"></div>
+
+
+		<script>var __basePath = './';</script>
+		<script src="https://unpkg.com/@ag-grid-enterprise/all-modules@25.3.0/dist/ag-grid-enterprise.min.js">
+		</script>
+
+
+ <script type="text/javascript" charset="utf-8">
+
+var CELL_DIMENSION_SIZE = 90;
+
+function LineChartLineRenderer() {
+}
+
+LineChartLineRenderer.prototype.init = function(params) {
+
+    var eGui = document.createElement('div');
+    this.eGui = eGui;
+
+    console.log(params);
+
+    if (!params.data)   return;
+    if (!params.data.buckets)   return;
+
+    // sparklines requires the eGui to be in the dom - so we put into a timeout to allow
+    // the grid to complete it's job of placing the cell into the browser.
+
+    setTimeout(function() {
+        var values=params.data.buckets.map(x=>x.doc_count);
+        /*
+        var values = params.value
+            .sort(function(a, b) { return new Date(a.Date).getTime() - new Date(b.Date).getTime(); })
+            .map(function(datum) { return datum.Close; });
+        */
+
+        $(eGui).sparkline(values, { height: CELL_DIMENSION_SIZE, width: 2*CELL_DIMENSION_SIZE, type: "bar" });
+
+    }, 0);
+
+
+};
+
+LineChartLineRenderer.prototype.getGui = function() {
+    return this.eGui;
+};
+
+
+
+
+
+
+function _compar(filterLocalDateAtMidnight, cellValue) {
+    var dateAsString = cellValue;
+    console.log("00+++ ", cellDate);
+    if (dateAsString == null) return -1;
+    var dateParts = dateAsString.split('/');
+    var cellDate = new Date(
+      Number(dateParts[2]),
+      Number(dateParts[0]) - 1,
+      Number(dateParts[1])
+    );
+
+    console.log("+++ ", cellDate);
+
+    if (filterLocalDateAtMidnight.getTime() === cellDate.getTime()) {
+      return 0;
+    }
+
+    if (cellDate.getTime() < filterLocalDateAtMidnight.getTime()) {
+      return -1;
+    }
+
+    if (cellDate.getTime() > filterLocalDateAtMidnight.getTime()) {
+      return 1;
+    }
+  }
+
+function    _formatter(params)
+{
+    var dateAsString = params.data.MDate;
+//    console.log("|||  ",params.data);
+
+    if (!dateAsString)  return  "";
+
+ //   var _rez=new Date(dateAsString).toLocaleDateString('en');
+
+    var _rez=new Intl.DateTimeFormat("en-US",{dateStyle:'short',timeStyle:'short'}).format(new Date(dateAsString))
+    
+    return  _rez;
+//    return  dateAsString;
+}
+
+
+function    _valGetter01(_params)
+{
+    if (!_params.data.buck01)   return  '';
+    var  _rez=_params.data.buck01[0];
+    if (_rez=='0')  return  '';
+    return  _rez;
+}
+
+function    _valGetter02(_params)
+{
+    if (!_params.data.buck02)   return  '';
+    var  _rez=_params.data.buck02[0];
+    if (_rez=='0')  return  '';
+    return  _rez;
+}
+
+function    _valGetter03(_params)
+{
+    if (!_params.data.buck03)   return  '';
+    var  _rez=_params.data.buck03[0];
+    if (_rez=='0')  return  '';
+    return  _rez;
+}
+
+function    _valGetter04(_params)
+{
+    if (!_params.data.buck04)   return  '';
+    var  _rez=_params.data.buck04[0];
+    if (_rez=='0')  return  '';
+    return  _rez;
+}
+
+
+function    _valGetter(_params)
+{
+    if (!_params.data)   return  '';
+//    console.log('WWWW  ',_params);
+//    return '???';
+
+    if (!_params.data[_params.column.colId])   return  '';
+    var  _rez=_params.data[_params.column.colId].doc_count;
+//    if (_rez=='0')  return  '';
+    return  _rez;
+}
+
+
+
+
+
+function    _tooltipGetter(_params)
+{
+    if(!_params.data[_params.column.colId]) return null;
+
+//    console.log('ZZZZ  ',_params.data[_params.column.colId]);
+
+    var _rt=_params.data[_params.column.colId];
+
+    var _from= (!_rt.from)? "*" : new Date(_rt.from).toLocaleDateString();
+    var _to=new Date(_rt.to).toLocaleDateString();
+
+    var  _rez=`${_from}-${_to}`;
+
+    return _rez;
+
+    return  _params.data[_params.column.colId].from_as_string;
+}
+
+
+var _cellRenderer=function(params) {
+            let keyData = params.data.Module;
+            let newLink = 
+            `<a href= https://ag-grid.com/${keyData}-getting-started
+            target="_blank">${keyData}</a>`;
+            return newLink;
+        };
+
+
+
+    var   _props_={valueGetter: _valGetter,type:'numericColumn', tooltipValueGetter: _tooltipGetter,minWidth: 100, /* suppressSizeToFit: true */  };
+
+    // specify the columns
+    const columnDefs = [
+      { field: "Module", sortable: true },
+      { field: "State" , filter: 'agSetColumnFilter'},
+      { field: "Programmer" , filter: 'agSetColumnFilter'},
+
+//      { field: "MDate", type: ['dateColumn', 'nonEditableColumn'] , valueFormatter:_formatter , filter: 'agDateColumnFilter',  sortable: true, filterParams:{ browserDatePicker:true, buttons:["clear","reset"]} },
+      { field: "MDate", /* type: ['dateColumn', 'nonEditableColumn'] , */ valueFormatter:_formatter , filter: 'agDateColumnFilter',  sortable: true, filterParams:{ browserDatePicker:true, buttons:["clear","reset"], includeBlanksInLessThan:true } },
+
+        {
+            headerName: 'Counts by periods',
+//suppressSizeToFit: true,
+//headerClass: ["ag-right-aligned-header"],
+
+//            headerClass:'text-centerzz',
+//            cellClass: "grid-cell-centered",
+
+//            cellStyle: {  textAlign: 'center'},
+
+
+            children: [
+      { field: "buck00",..._props_},
+      { field: "buck01",..._props_},
+      { field: "buck02",..._props_},
+      { field: "buck03",..._props_},
+      { field: "buck04",..._props_},
+            ]
+        },
+
+/*
+        { field:"murra", cellRenderer:_cellRenderer },
+
+        {
+        headerName: 'Sparkline',
+        field: '_bucks',
+        width: 115,
+        resizable: false,
+        suppressSizeToFit: true,
+        cellRenderer: 'lineChartLineRenderer'
+    }
+*/
+
+
+    ];
+
+
+//    var goga={{  mmqmodules | dump | safe }}
+    var goga={{  svodka | dump | safe }}
+
+
+    // let the grid know which columns to use
+    const gridOptions = {
+      columnDefs: columnDefs,
+        defaultColDef: {
+    flex: 1,
+    minWidth: 200,
+    resizable: true,
+    floatingFilter: true,
+    filterParams:{ browserDatePicker:true, buttons:["clear","reset"]}},
+    rowData:goga,
+// rowHeight: 95,
+statusBar: {
+    statusPanels: [
+      { statusPanel: 'agTotalAndFilteredRowCountComponent', align: 'left' },
+      { statusPanel: 'agTotalRowCountComponent', align: 'center' },
+      { statusPanel: 'agFilteredRowCountComponent' },
+      { statusPanel: 'agSelectedRowCountComponent' },
+      { statusPanel: 'agAggregationComponent' },
+    ],
+  },
+
+//onFirstDataRendered: onFirstDataRendered,
+
+   components: {   lineChartLineRenderer: LineChartLineRenderer   }
+    };
+
+    function onFirstDataRendered(params) {
+  params.api.sizeColumnsToFit();
+}
+
+  // lookup the container we want the Grid to use
+//  const eGridDiv = document.querySelector('#myGrid');
+
+  // create the grid passing in the div to use together with the columns & data we want to use
+//  new agGrid.Grid(eGridDiv, gridOptions);
+
+
+
+document.addEventListener('DOMContentLoaded', function () {
+  var gridDiv = document.querySelector('#myGrid');
+  new agGrid.Grid(gridDiv, gridOptions);
+
+});
+
+
+
+</script
+
+
+
+
+</body>
+
+</html>
